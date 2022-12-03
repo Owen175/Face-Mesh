@@ -18,6 +18,10 @@ while True:
     if results.multi_face_landmarks:
         for faceLms in results.multi_face_landmarks:
             mpDraw.draw_landmarks(img, faceLms, mpFaceMesh.FACEMESH_CONTOURS, drawSpec, drawSpec)
+            #for lm in faceLms.landmark:
+            #    print(lm)
+            # Indices for the different face points
+            # https://github.com/ManuelTS/augmentedFaceMeshIndices
 
     cTime = time.time()
     fps = 1/(cTime - pTime)
