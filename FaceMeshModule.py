@@ -26,12 +26,19 @@ class FaceMeshDetector():
                min_tracking_confidence=self.minTrackCon)
         self.drawSpec = self.mpDraw.DrawingSpec(thickness=1, circle_radius=1)
 
-    def findFaceMesh(self, img, draw=True, indexes=[]):
+    def findFaceMesh(self, img, draw=True, indexes=[], returnWholeFace=False):
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         self.results = self.faceMesh.process(imgRGB)
         self.indexList = []
+        self.face = []
+        self.faces = []
         if self.results.multi_face_landmarks:
             for faceLms in self.results.multi_face_landmarks:
+                if returnWholeFace:
+                    for lm in faceLms.landmark:
+                        ih, iw, ic = img.shape
+                        x, y = int(lm.x * iw), int(lm.y * ih)
+                        self.face.append([x, y])
                 for index in indexes:
                     ih, iw, ic = img.shape
                     lm = faceLms.landmark[index]
@@ -41,7 +48,12 @@ class FaceMeshDetector():
                     # https://github.com/ManuelTS/augmentedFaceMeshIndices
                 if draw:
                     self.mpDraw.draw_landmarks(img, faceLms, self.mpFaceMesh.FACEMESH_CONTOURS, self.drawSpec, self.drawSpec)
-        return img, self.indexList
+
+            self.faces.append(self.face)
+        if returnWholeFace is False:
+            return img, self.indexList
+        else:
+            return img, self.faces
 
 
 
@@ -58,8 +70,9 @@ def main():
         fps = 1/(cTime - pTime)
         pTime = cTime
 
-        img, indexList = detector.findFaceMesh(img, indexes=[23,34,5,4,6,344,34,56,43])
-        for coord in indexList:
+        #img, indexList = detector.findFaceMesh(img, indexes=[23,34,5,4,6,344,34,56,43])
+        img, faceList = detector.findFaceMesh(img, returnWholeFace=True)
+        for coord in faceList:
             print(coord)
         cv2.putText(img, f'FPS: {int(fps)}', (20,70), cv2.FONT_HERSHEY_PLAIN, 3, (0,255,0), 3)
         cv2.imshow('Image', img)
