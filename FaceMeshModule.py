@@ -26,7 +26,7 @@ class FaceMeshDetector():
                min_tracking_confidence=self.minTrackCon)
         self.drawSpec = self.mpDraw.DrawingSpec(thickness=1, circle_radius=1)
 
-    def findFaceMesh(self, img, draw=True, indexes=[], returnWholeFace=False):
+    def findFaceMesh(self, img, draw=True, indexes=[], returnWholeFace=False, numberedPoints=False):
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         self.results = self.faceMesh.process(imgRGB)
         self.indexList = []
@@ -34,11 +34,14 @@ class FaceMeshDetector():
         self.faces = []
         if self.results.multi_face_landmarks:
             for faceLms in self.results.multi_face_landmarks:
-                if returnWholeFace:
-                    for lm in faceLms.landmark:
+                if returnWholeFace or numberedPoints:
+                    for id, lm in enumerate(faceLms.landmark):
                         ih, iw, ic = img.shape
                         x, y = int(lm.x * iw), int(lm.y * ih)
-                        self.face.append([x, y])
+                        if returnWholeFace:
+                            self.face.append([x, y])
+                        if numberedPoints:
+                            cv2.putText(img, f'{str(id)}', (x, y), cv2.FONT_HERSHEY_PLAIN, 0.7, (0, 255, 0), 1)
                 for index in indexes:
                     ih, iw, ic = img.shape
                     lm = faceLms.landmark[index]
@@ -60,7 +63,7 @@ class FaceMeshDetector():
 
 def main():
     # cap = cv2.VideoCapture(0)
-    cap = cv2.VideoCapture('Videos/2.mp4')
+    cap = cv2.VideoCapture('Videos/4.mp4')
     detector = FaceMeshDetector()
     pTime = 0
 
@@ -71,9 +74,8 @@ def main():
         pTime = cTime
 
         #img, indexList = detector.findFaceMesh(img, indexes=[23,34,5,4,6,344,34,56,43])
-        img, faceList = detector.findFaceMesh(img, returnWholeFace=True)
-        for coord in faceList:
-            print(coord)
+        img, faceList = detector.findFaceMesh(img, returnWholeFace=True, numberedPoints=True)
+
         cv2.putText(img, f'FPS: {int(fps)}', (20,70), cv2.FONT_HERSHEY_PLAIN, 3, (0,255,0), 3)
         cv2.imshow('Image', img)
         cv2.waitKey(1)
